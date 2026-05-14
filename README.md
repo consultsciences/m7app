@@ -1,11 +1,42 @@
-<div align="center">
+# M7A - Autonomic Engineering Forge
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+The Forge is an advanced application orchestration environment powered by the M7A Neural Kernel. It allows operatives to synthesize full-stack applications from high-level conceptual prompts.
 
-  <h1>Built with AI Studio</h2>
+## Quick Start
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+### 1. Environment Configuration
+Create a `.env` file from `.env.example` and provide your credentials.
+```bash
+cp .env.example .env
+```
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-</div>
+### 3. Start Development Matrix
+```bash
+npm run dev
+```
+
+## Security Protocols
+
+### Firestore Rules
+Security rules are mandatory for production operation. Deploy them using:
+```bash
+npx firebase-tools deploy --only firestore:rules
+```
+
+### Authentication
+The forge supports Google OAuth and Operative Email/Password protocols.
+
+## Autonomic Calibration
+The system uses Google Gemini for architectural synthesis. Ensure your `GEMINI_API_KEY` is correctly set in the environment.
+
+## Deployment
+Synthesis results are staged in the `dist` conduit.
+```bash
+npm run build
+npm run start
+```

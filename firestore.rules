@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) 
+                    && incoming().credits == 100 
+                    && incoming().plan == 'free'
+                    && incoming().uid == userId;
+      allow update: if (isOwner(userId) || isAdmin())
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'currentWorkspaceId', 'plan', 'credits', 'stripeCustomerId']);
+    }
+
+    // Workspaces
+    match /workspaces/{workspaceId} {
+      allow read: if isSignedIn() && request.auth.uid in existing().members;
+      allow create: if isSignedIn() && incoming().ownerId == request.auth.uid && incoming().members.hasAll([request.auth.uid]);
+      allow update: if isSignedIn() && (request.auth.uid == existing().ownerId || isAdmin());
+      allow delete: if isSignedIn() && (request.auth.uid == existing().ownerId || isAdmin());
+    }
+
+    // Projects
+    match /projects/{projectId} {
+      allow read: if isSignedIn() && (request.auth.uid == existing().ownerId || isAdmin());
+      allow create: if isSignedIn() && incoming().ownerId == request.auth.uid;
+      allow update: if isSignedIn() && (request.auth.uid == existing().ownerId || isAdmin());
+      allow delete: if isSignedIn() && (request.auth.uid == existing().ownerId || isAdmin());
+
+      // Nested Jobs
+      match /jobs/{jobId} {
+        allow read: if isSignedIn() && (get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid || isAdmin());
+        allow create: if isSignedIn() && get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid;
+        allow update: if isSignedIn() && (get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid || isAdmin());
+      }
+
+      // Nested Artifacts
+      match /artifacts/{artifactId} {
+        allow read: if isSignedIn() && (get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid || isAdmin());
+        allow write: if isSignedIn() && (get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid || isAdmin());
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "userProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user metadata and subscription state.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "credits": { "type": "number" },
+        "plan": { "type": "string", "enum": ["free", "pro", "enterprise"] },
+        "currentWorkspaceId": { "type": "string" },
+        "stripeCustomerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "credits", "plan"]
+    },
+    "workspace": {
+      "title": "Workspace",
+      "description": "A shared environment for projects and teams.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "project": {
+      "title": "Project",
+      "description": "A generated application project.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "teamId": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "building", "deployed"] },
+        "description": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId", "status"]
+    },
+    "job": {
+      "title": "GenerationJob",
+      "description": "Multi-step generation pipeline state.",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "prompt": { "type": "string" },
+        "status": { "type": "string", "enum": ["queued", "processing", "completed", "failed"] },
+        "steps": { 
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "status": { "type": "string" },
+              "output": { "type": "string" }
+            }
+          }
+        },
+        "error": { "type": "string" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectId", "prompt", "status"]
+    },
+    "artifact": {
+      "title": "Artifact",
+      "description": "A code file or asset generated for a project.",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "jobId": { "type": "string" },
+        "path": { "type": "string" },
+        "content": { "type": "string" },
+        "version": { "type": "number" },
+        "language": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectId", "path", "content"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "userProfile",
+      "description": "User profile and subscription data."
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": "workspace",
+      "description": "Workspace groupings for projects."
+    },
+    "/projects/{projectId}": {
+      "schema": "project",
+      "description": "Main project metadata."
+    },
+    "/projects/{projectId}/jobs/{jobId}": {
+      "schema": "job",
+      "description": "Detailed generation job history for a project."
+    },
+    "/projects/{projectId}/artifacts/{artifactId}": {
+      "schema": "artifact",
+      "description": "Source code and assets for a specific project."
+    }
+  }
+}
