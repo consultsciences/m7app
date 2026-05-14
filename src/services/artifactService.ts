@@ -64,5 +64,22 @@ export const artifactService = {
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `projects/${projectId}/artifacts`);
     }
+  },
+
+  async getProjectArtifacts(projectId: string) {
+    try {
+      const q = query(
+        collection(db, 'projects', projectId, 'artifacts'),
+        where('projectId', '==', projectId)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Artifact[];
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, `projects/${projectId}/artifacts`);
+      return [];
+    }
   }
 };

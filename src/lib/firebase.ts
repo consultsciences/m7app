@@ -37,7 +37,7 @@ export const getAuthErrorMessage = (errorCode: string): string => {
     case 'auth/weak-password':
       return 'Security breach risk: Password strength is insufficient. Use at least 6 characters.';
     case 'auth/operation-not-allowed':
-      return 'This authentication protocol is currently disabled by the kernel.';
+      return 'Email/Password authentication is disabled in your Firebase Console. Please enable it in the Authentication > Sign-in method tab, or use Google Sign-in to skip this step.';
     case 'auth/too-many-requests':
       return 'System overload. Access blocked due to excessive attempts. Stand by.';
     case 'auth/network-request-failed':

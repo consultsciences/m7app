@@ -19,43 +19,44 @@ export interface CodebasePlan extends GenerationPlan {
 }
 
 export async function generateCodebase(prompt: string): Promise<CodebasePlan> {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: `You are a legendary software architect. Given the user's prompt, generate a full-stack Next.js project scaffold.
-    Include core files: package.json, tsconfig.json, tailwind.config.ts, layout.tsx, page.tsx, and at least 2 relevant components/lib files.
-    The code must be beautiful, modern, and follow best practices.
-    
-    User Request: "${prompt}"`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          projectName: { type: Type.STRING },
-          description: { type: Type.STRING },
-          steps: { type: Type.ARRAY, items: { type: Type.STRING } },
-          files: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                path: { type: Type.STRING, description: "Relative path from root (e.g. app/page.tsx)" },
-                content: { type: Type.STRING },
-                language: { type: Type.STRING, description: "file extension without dot (e.g. tsx, ts, json)" }
-              },
-              required: ["path", "content", "language"]
-            }
-          }
-        },
-        required: ["projectName", "description", "steps", "files"]
-      }
-    }
-  });
-
+  console.log("Generating codebase with Gemini for prompt:", prompt);
   try {
-    return JSON.parse(response.text);
+    const result = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: 'user', parts: [{ text: `You are a software architect. Generate a modern application codebase.
+        Include package.json, global.css, and core components.
+        Target user intent: "${prompt}"` }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            projectName: { type: Type.STRING },
+            description: { type: Type.STRING },
+            steps: { type: Type.ARRAY, items: { type: Type.STRING } },
+            files: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  path: { type: Type.STRING, description: "Relative path from root (e.g. components/Header.tsx)" },
+                  content: { type: Type.STRING },
+                  language: { type: Type.STRING, description: "file extension without dot" }
+                },
+                required: ["path", "content", "language"]
+              }
+            }
+          },
+          required: ["projectName", "description", "steps", "files"]
+        }
+      }
+    });
+    
+    console.log("Gemini response received");
+    // Structured output in @google/genai is available via .value
+    return (result as any).value as CodebasePlan;
   } catch (e) {
-    console.error("Failed to parse codebase generation", e);
+    console.error("Gemini failed synthesis:", e);
     throw e;
   }
 }
